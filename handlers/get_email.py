@@ -1,6 +1,5 @@
 """
 Get Email Handler — scans user's assigned IMAP accounts for Netflix emails.
-Ported from old monolithic bot with full styling.
 """
 
 import asyncio
@@ -26,21 +25,20 @@ scan_executor = ThreadPoolExecutor(max_workers=4)
 
 
 async def check_household_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle ✅ Check Update Household button."""
+    """Handle Check Update Household button."""
     await _scan_and_reply(update, context, "household")
 
 
 async def check_temp_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle 🔐 Check Temporary Code button."""
+    """Handle Check Temporary Code button."""
     await _scan_and_reply(update, context, "temp")
 
 
-# Keep old name for backward compat
 get_email_handler = check_household_handler
 
 
 async def _scan_and_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, mode: str):
-    """Core scan function — checks rate limit, scans IMAP, replies with result."""
+    """Core scan function."""
     user = update.effective_user
     user_id = user.id
 
@@ -50,7 +48,7 @@ async def _scan_and_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, mo
     if now - last_scan < SCAN_COOLDOWN:
         remaining = int(SCAN_COOLDOWN - (now - last_scan))
         await update.message.reply_text(
-            f"⏳ Please wait <b>{remaining}</b> seconds before next scan.",
+            f"<b>Please wait {remaining} seconds</b> before your next scan.",
             parse_mode=ParseMode.HTML,
         )
         return
@@ -61,10 +59,10 @@ async def _scan_and_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, mo
     if not accounts:
         admin = await is_user_admin(user_id)
         await update.message.reply_text(
-            f"⚠️ <b>No IMAP account assigned</b>\n\n"
-            f"@{html_escape(user.username or 'user')}, aapko abhi koi email account assign nahi hua hai.\n\n"
-            f"Admin se contact karo ya support pe message karo.\n\n"
-            f"📞 WhatsApp: <b>{html_escape(SUPPORT_WA)}</b>\n"
+            f"<b>No Email Account Assigned</b>\n\n"
+            f"@{html_escape(user.username or 'user')}, you don't have any email account assigned yet.\n\n"
+            f"Please contact admin to get an account assigned.\n\n"
+            f"Support: <b>{html_escape(SUPPORT_WA)}</b>\n"
             f"{html_escape(SUPPORT_WA_LINK)}",
             parse_mode=ParseMode.HTML,
             disable_web_page_preview=True,
@@ -76,14 +74,14 @@ async def _scan_and_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, mo
 
     # ── Show scanning message ───────────────────────
     scan_msg = await update.message.reply_text(
-        f"🔌 <b>Secure connection establish ho chuka hai...</b>\n\n"
-        f"📬 Inbox access granted.\n\n"
-        f"New mails check kiye ja rahe hai...\n"
-        f"Wait kijiye link milega link pr tap krke aage continue kijiye...\n\n"
-        f"agar na mile to firse button ko tap kijiye mil jayega\n"
-        f"agar 3-4 bar me na mile to hame whatsapp pr msg kijiyega.\n"
-        f"@{html_escape(user.username or 'user')}...\n"
-        f"Mission in progress. 🎯",
+        f"<b>Establishing secure connection...</b>\n\n"
+        f"Inbox access granted.\n\n"
+        f"Scanning for new emails...\n"
+        f"Please wait while we find your verification link.\n\n"
+        f"If not found on first try, tap the button again.\n"
+        f"After 3-4 attempts, please contact support.\n\n"
+        f"@{html_escape(user.username or 'user')}\n"
+        f"Scan in progress...",
         parse_mode=ParseMode.HTML,
     )
 
@@ -127,15 +125,18 @@ async def _scan_and_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, mo
 
     if hit is None:
         # ── NOT FOUND ──────────────────────────────
-        await scan_msg.delete()
+        try:
+            await scan_msg.delete()
+        except Exception:
+            pass
         await update.message.reply_text(
-            f"📭 <b>Aaj inbox thoda khamosh hai...</b>\n\n"
-            f"@{html_escape(user.username or 'user')}, required mail abhi tak locate nahi hua.\n\n"
-            "Possible reasons:\n"
-            "• Mail unread nahi hai\n"
-            "• Abhi receive nahi hua\n\n"
-            "🔁 Fresh request bhejiye aur phir try kijiye.\n\n"
-            f"Kahaani abhi khatam nahi hui. 💎",
+            f"<b>No Matching Email Found</b>\n\n"
+            f"@{html_escape(user.username or 'user')}, the required email was not found.\n\n"
+            f"Possible reasons:\n"
+            f"  - Email has already been read\n"
+            f"  - Email hasn't arrived yet\n\n"
+            f"Please request a new email and try again.\n\n"
+            f"Status: <i>{html_escape(status)}</i>",
             parse_mode=ParseMode.HTML,
             disable_web_page_preview=True,
             reply_markup=get_main_menu(is_admin=admin),
@@ -143,33 +144,31 @@ async def _scan_and_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, mo
         return
 
     # ── FOUND! ─────────────────────────────────────
-    await scan_msg.delete()
+    try:
+        await scan_msg.delete()
+    except Exception:
+        pass
     safe_link = hit.link
 
     if mode == "household":
         found_text = (
-            f"Netflix: 😎 <i>Link ko pakadna mushkil hi nahi... namumkin hai.</i>\n\n"
-            f"Lekin...\n\n"
-            f"{html_escape(BRAND)}: 🏠 Household verification link ko dhoondhna?\n\n"
-            f"Woh kaam {html_escape(BRAND)} ka hai. 💎\n\n"
-            f"@{html_escape(user.username or 'user')}...\n"
-            f"Jo chahiye tha... woh mil gaya.\n\n"
-            f"🔗 <b>Household Update Link ready hai.</b>\n\n"
-            f"Der mat karo...\n"
-            f"Click karo aur update complete karo. ⚡\n\n"
-            f"Baaki system sambhal lega."
+            f"<b>Household Verification Link Found!</b>\n\n"
+            f"@{html_escape(user.username or 'user')}, your link is ready.\n\n"
+            f"Subject: <i>{html_escape(hit.subject[:60])}</i>\n"
+            f"From: <i>{html_escape(hit.sender[:40])}</i>\n"
+            f"Date: <i>{html_escape(hit.date[:30])}</i>\n\n"
+            f"Click the button below to update your household.\n"
+            f"Complete the process on the Netflix page."
         )
     else:
         found_text = (
-            f"Netflix: 😎 <i>Code milna aasaan nahi hota...</i>\n\n"
-            f"Lekin...\n\n"
-            f"{html_escape(BRAND)}: 🔐 Temporary verification link ko locate karna?\n\n"
-            f"Woh hamara kaam hai. 💎\n\n"
-            f"@{html_escape(user.username or 'user')}...\n"
-            f"Target secure ho chuka hai.\n\n"
-            f"🔗 <b>Temporary Code Link ready hai.</b>\n\n"
-            f"Click karo... code generate karo... access confirm karo. ⚡\n\n"
-            f"System apna kaam kar chuka hai."
+            f"<b>Temporary Code Link Found!</b>\n\n"
+            f"@{html_escape(user.username or 'user')}, your link is ready.\n\n"
+            f"Subject: <i>{html_escape(hit.subject[:60])}</i>\n"
+            f"From: <i>{html_escape(hit.sender[:40])}</i>\n"
+            f"Date: <i>{html_escape(hit.date[:30])}</i>\n\n"
+            f"Click the button below to get your temporary code.\n"
+            f"Enter the code on your Netflix device."
         )
 
     await update.message.reply_text(
@@ -177,14 +176,13 @@ async def _scan_and_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, mo
         parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔗 Open Link", url=safe_link)]
+            [InlineKeyboardButton("Open Link", url=safe_link)]
         ]),
     )
 
-    # Thank you message
     await update.message.reply_text(
-        f"🙏 <b>Thank you for using {html_escape(BRAND)}!</b>\n\n"
-        f"Link use kar liya? Hope sab smooth raha. 💎",
+        f"<b>Thank you for using {html_escape(BRAND)}!</b>\n\n"
+        f"If you need help, contact support.",
         parse_mode=ParseMode.HTML,
         reply_markup=get_main_menu(is_admin=admin),
     )
