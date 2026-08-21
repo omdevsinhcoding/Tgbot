@@ -1,41 +1,27 @@
 """
-Admin Menu Keyboard — sub-menu for admin panel operations.
+Admin Menu Keyboard — Inline buttons for admin panel.
 """
 
-from telegram import ReplyKeyboardMarkup, KeyboardButton
-from config import (
-    BTN_EDIT_WELCOME, BTN_MANAGE_PLANS,
-    BTN_MANAGE_USER_PLANS, BTN_BACK,
-    BTN_CREATE_PLAN, BTN_LIST_PLANS,
-    BTN_DELETE_PLAN, BTN_BACK_ADMIN,
-)
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-def get_admin_menu() -> ReplyKeyboardMarkup:
-    """Admin panel sub-menu keyboard."""
+def get_admin_menu() -> InlineKeyboardMarkup:
+    """Admin panel inline keyboard."""
     keyboard = [
-        [KeyboardButton(BTN_EDIT_WELCOME)],
-        [KeyboardButton(BTN_MANAGE_PLANS)],
-        [KeyboardButton(BTN_MANAGE_USER_PLANS)],
-        [KeyboardButton(BTN_BACK)],
+        [InlineKeyboardButton("✏️ Edit Welcome Message", callback_data="admin:welcome")],
+        [InlineKeyboardButton("📋 Manage Plans", callback_data="admin:plans")],
+        [InlineKeyboardButton("👥 Manage User Plans", callback_data="admin:user_plans")],
+        [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="admin:back")],
     ]
-    return ReplyKeyboardMarkup(
-        keyboard,
-        resize_keyboard=True,
-        one_time_keyboard=False,
-    )
+    return InlineKeyboardMarkup(keyboard)
 
 
-def get_plan_manager_menu() -> ReplyKeyboardMarkup:
-    """Plan management sub-menu keyboard."""
+def get_plan_manager_menu() -> InlineKeyboardMarkup:
+    """Plan management inline keyboard."""
     keyboard = [
-        [KeyboardButton(BTN_CREATE_PLAN)],
-        [KeyboardButton(BTN_LIST_PLANS)],
-        [KeyboardButton(BTN_DELETE_PLAN)],
-        [KeyboardButton(BTN_BACK_ADMIN)],
+        [InlineKeyboardButton("➕ Create Plan", callback_data="admin:create_plan")],
+        [InlineKeyboardButton("📄 List Plans", callback_data="admin:list_plans")],
+        [InlineKeyboardButton("🗑️ Delete Plan", callback_data="admin:delete_plan")],
+        [InlineKeyboardButton("🔙 Back to Admin", callback_data="admin:panel")],
     ]
-    return ReplyKeyboardMarkup(
-        keyboard,
-        resize_keyboard=True,
-        one_time_keyboard=False,
-    )
+    return InlineKeyboardMarkup(keyboard)

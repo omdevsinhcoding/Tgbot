@@ -7,6 +7,7 @@ from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     MessageHandler,
+    CallbackQueryHandler,
     filters,
 )
 
@@ -14,7 +15,6 @@ from config import (
     BOT_TOKEN,
     BTN_PROFILE, BTN_GET_EMAIL, BTN_DIRECT_LINK,
     BTN_TV_ACTIVATION, BTN_SUPPORT, BTN_ADMIN_PANEL,
-    BTN_MANAGE_PLANS, BTN_LIST_PLANS, BTN_BACK, BTN_BACK_ADMIN,
 )
 
 # Database
@@ -30,12 +30,9 @@ from handlers.tv_activation import tv_activation_handler
 from handlers.support import support_handler
 
 # Admin Handlers
-from handlers.admin.panel import admin_panel_handler, back_to_main_handler
+from handlers.admin.panel import admin_panel_handler, admin_callback_handler
 from handlers.admin.welcome_editor import get_welcome_editor_conversation
 from handlers.admin.plan_manager import (
-    manage_plans_handler,
-    list_plans_handler,
-    back_to_admin_handler,
     get_create_plan_conversation,
     get_delete_plan_conversation,
 )
@@ -86,12 +83,11 @@ def main():
     app.add_handler(MessageHandler(filters.Regex(f"^{BTN_TV_ACTIVATION}$"), tv_activation_handler))
     app.add_handler(MessageHandler(filters.Regex(f"^{BTN_SUPPORT}$"), support_handler))
 
-    # ── Admin Handlers ──────────────────────────────────────
+    # ── Admin: ReplyKeyboard entry → opens inline panel ─────
     app.add_handler(MessageHandler(filters.Regex(f"^{BTN_ADMIN_PANEL}$"), admin_panel_handler))
-    app.add_handler(MessageHandler(filters.Regex(f"^{BTN_MANAGE_PLANS}$"), manage_plans_handler))
-    app.add_handler(MessageHandler(filters.Regex(f"^{BTN_LIST_PLANS}$"), list_plans_handler))
-    app.add_handler(MessageHandler(filters.Regex(f"^{BTN_BACK}$"), back_to_main_handler))
-    app.add_handler(MessageHandler(filters.Regex(f"^{BTN_BACK_ADMIN}$"), back_to_admin_handler))
+
+    # ── Admin: Inline button callbacks ──────────────────────
+    app.add_handler(CallbackQueryHandler(admin_callback_handler, pattern=r"^admin:"))
 
     # ── Start Polling ───────────────────────────────────────
     print("🚀 Bot is running! Press Ctrl+C to stop.")

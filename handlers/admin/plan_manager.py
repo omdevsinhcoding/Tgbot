@@ -1,19 +1,19 @@
 """
 Plan Manager — admin can create, list, and delete subscription plans.
-Uses ConversationHandler for multi-step plan creation flow.
+Uses ConversationHandler triggered by inline callbacks.
 """
 
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ContextTypes,
     ConversationHandler,
+    CallbackQueryHandler,
     CommandHandler,
     MessageHandler,
     filters,
 )
 
 from database.connection import get_pool
-from utils.decorators import admin_only
 from utils.helpers import get_active_plans
 from keyboards.admin_menu import get_plan_manager_menu, get_admin_menu
 
@@ -24,26 +24,15 @@ PLAN_NAME, PLAN_DESC, PLAN_DURATION, PLAN_PRICE, PLAN_MAX_EMAILS = range(5)
 PLAN_DELETE_ID = 10
 
 
-@admin_only
-async def manage_plans_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle the 📋 Manage Plans button — show sub-menu."""
-    await update.message.reply_text(
-        "📋 *Plan Manager*\n"
-        "━━━━━━━━━━━━━━━━━━\n\n"
-        "Choose an action:",
-        parse_mode="Markdown",
-        reply_markup=get_plan_manager_menu(),
-    )
-
-
 # ═══════════════════════════════════════════════════════════
 # CREATE PLAN (multi-step conversation)
 # ═══════════════════════════════════════════════════════════
 
-@admin_only
-async def create_plan_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Step 1: Ask for plan name."""
-    await update.message.reply_text(
+async def start_create_plan_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Step 1: Ask for plan name (triggered by inline button)."""
+    query = update.callback_query
+
+    await query.message.edit_text(
         "➕ *Create New Plan*\n"
         "━━━━━━━━━━━━━━━━━━\n\n"
         "*Step 1/5:* Enter the plan name:\n\n"
@@ -154,20 +143,22 @@ async def plan_max_emails_received(update: Update, context: ContextTypes.DEFAULT
 
 
 # ═══════════════════════════════════════════════════════════
-# LIST PLANS
+# LIST PLANS (inline callback, no conversation needed)
 # ═══════════════════════════════════════════════════════════
 
-@admin_only
-async def list_plans_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def list_plans_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show all plans (active + inactive)."""
+    query = update.callback_query
     pool = await get_pool()
+
     async with pool.acquire() as conn:
         plans = await conn.fetch("SELECT * FROM plans ORDER BY id ASC")
 
     if not plans:
-        await update.message.reply_text(
+        await query.message.edit_text(
             "📋 *No plans exist yet.*\n\nCreate one using ➕ Create Plan.",
             parse_mode="Markdown",
+            reply_markup=get_plan_manager_menu(),
         )
         return
 
@@ -183,19 +174,24 @@ async def list_plans_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
             f"━━━━━━━━━━━━━━━━━━\n"
         )
 
-    await update.message.reply_text(text, parse_mode="Markdown")
+    await query.message.edit_text(
+        text,
+        parse_mode="Markdown",
+        reply_markup=get_plan_manager_menu(),
+    )
 
 
 # ═══════════════════════════════════════════════════════════
-# DELETE PLAN
+# DELETE PLAN (conversation triggered by inline)
 # ═══════════════════════════════════════════════════════════
 
-@admin_only
-async def delete_plan_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Ask for the plan ID to delete (soft-delete by deactivating)."""
+async def start_delete_plan_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Ask for the plan ID to delete (triggered by inline button)."""
+    query = update.callback_query
     plans = await get_active_plans()
+
     if not plans:
-        await update.message.reply_text(
+        await query.message.edit_text(
             "📋 No active plans to delete.",
             reply_markup=get_plan_manager_menu(),
         )
@@ -206,7 +202,7 @@ async def delete_plan_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text += f"🆔 *{p['id']}* — {p['name']} (₹{p['price']})\n"
     text += "\nEnter the *Plan ID* to deactivate:\n\nSend /cancel to cancel."
 
-    await update.message.reply_text(text, parse_mode="Markdown")
+    await query.message.edit_text(text, parse_mode="Markdown")
     return PLAN_DELETE_ID
 
 
@@ -248,7 +244,6 @@ async def delete_plan_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def cancel_plan_action(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Cancel any plan management action."""
-    # Clean up temp data
     for key in list(context.user_data.keys()):
         if key.startswith("new_plan_"):
             del context.user_data[key]
@@ -260,17 +255,6 @@ async def cancel_plan_action(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return ConversationHandler.END
 
 
-@admin_only
-async def back_to_admin_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle 🔙 Back to Admin button."""
-    from keyboards.admin_menu import get_admin_menu
-    await update.message.reply_text(
-        "⚙️ *Admin Panel*\n\nChoose an option:",
-        parse_mode="Markdown",
-        reply_markup=get_admin_menu(),
-    )
-
-
 # ═══════════════════════════════════════════════════════════
 # CONVERSATION HANDLERS
 # ═══════════════════════════════════════════════════════════
@@ -279,7 +263,7 @@ def get_create_plan_conversation() -> ConversationHandler:
     """Build ConversationHandler for plan creation (5-step)."""
     return ConversationHandler(
         entry_points=[
-            MessageHandler(filters.Regex(r"^➕ Create Plan$"), create_plan_start),
+            CallbackQueryHandler(start_create_plan_callback, pattern=r"^admin:create_plan$"),
         ],
         states={
             PLAN_NAME: [
@@ -311,7 +295,7 @@ def get_delete_plan_conversation() -> ConversationHandler:
     """Build ConversationHandler for plan deletion."""
     return ConversationHandler(
         entry_points=[
-            MessageHandler(filters.Regex(r"^🗑️ Delete Plan$"), delete_plan_start),
+            CallbackQueryHandler(start_delete_plan_callback, pattern=r"^admin:delete_plan$"),
         ],
         states={
             PLAN_DELETE_ID: [

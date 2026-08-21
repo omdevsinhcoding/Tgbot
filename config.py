@@ -35,14 +35,5 @@ BTN_TV_ACTIVATION = "📺 TV Activate"
 BTN_SUPPORT = "🆘 Support"
 BTN_ADMIN_PANEL = "⚙️ Admin Panel"
 
-# Admin Sub-Menu Buttons
-BTN_EDIT_WELCOME = "✏️ Edit Welcome Message"
-BTN_MANAGE_PLANS = "📋 Manage Plans"
-BTN_MANAGE_USER_PLANS = "👥 Manage User Plans"
-BTN_BACK = "🔙 Back to Main Menu"
-
-# Admin Plan Manager Sub-Buttons
-BTN_CREATE_PLAN = "➕ Create Plan"
-BTN_LIST_PLANS = "📄 List Plans"
-BTN_DELETE_PLAN = "🗑️ Delete Plan"
-BTN_BACK_ADMIN = "🔙 Back to Admin"
+# Admin buttons are now inline (callback_data in keyboards/admin_menu.py)
+# No text constants needed for admin sub-menus

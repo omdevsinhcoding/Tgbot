@@ -1,17 +1,18 @@
 """
 Welcome Editor — admin can view and update the bot's welcome message.
-Uses ConversationHandler for multi-step flow.
+Uses ConversationHandler triggered by inline callback.
 """
 
 from telegram import Update
 from telegram.ext import (
     ContextTypes,
     ConversationHandler,
+    CallbackQueryHandler,
     MessageHandler,
+    CommandHandler,
     filters,
 )
 
-from utils.decorators import admin_only
 from utils.helpers import get_setting, set_setting
 from keyboards.admin_menu import get_admin_menu
 
@@ -19,15 +20,15 @@ from keyboards.admin_menu import get_admin_menu
 WAITING_FOR_WELCOME_MSG = 0
 
 
-@admin_only
-async def edit_welcome_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start_welcome_edit_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Handle the ✏️ Edit Welcome Message button.
+    Called from admin callback router.
     Shows current message and asks for the new one.
     """
+    query = update.callback_query
     current_msg = await get_setting("welcome_message", "No welcome message set.")
 
-    await update.message.reply_text(
+    await query.message.edit_text(
         "✏️ *Edit Welcome Message*\n"
         "━━━━━━━━━━━━━━━━━━\n\n"
         "📝 *Current welcome message:*\n\n"
@@ -67,13 +68,11 @@ async def cancel_welcome_edit(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 def get_welcome_editor_conversation() -> ConversationHandler:
     """Build the ConversationHandler for welcome message editing."""
-    from telegram.ext import CommandHandler
-
     return ConversationHandler(
         entry_points=[
-            MessageHandler(
-                filters.Regex(r"^✏️ Edit Welcome Message$"),
-                edit_welcome_handler,
+            CallbackQueryHandler(
+                start_welcome_edit_callback,
+                pattern=r"^admin:welcome$",
             ),
         ],
         states={

@@ -1,6 +1,6 @@
 """
-User Plan Manager — admin can assign or remove a plan from a user.
-Uses ConversationHandler for multi-step assignment flow.
+User Plan Manager — admin assigns/removes plans from users.
+Uses ConversationHandler triggered by inline callback.
 """
 
 from datetime import datetime, timedelta
@@ -9,13 +9,13 @@ from telegram import Update
 from telegram.ext import (
     ContextTypes,
     ConversationHandler,
+    CallbackQueryHandler,
     CommandHandler,
     MessageHandler,
     filters,
 )
 
 from database.connection import get_pool
-from utils.decorators import admin_only
 from utils.helpers import get_active_plans
 from keyboards.admin_menu import get_admin_menu
 
@@ -23,13 +23,13 @@ from keyboards.admin_menu import get_admin_menu
 USER_TELEGRAM_ID, SELECT_PLAN = range(2)
 
 
-@admin_only
-async def manage_user_plans_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start_user_plan_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Handle the 👥 Manage User Plans button.
-    Step 1: Ask for user's Telegram ID.
+    Step 1: Ask for user's Telegram ID (triggered by inline button).
     """
-    await update.message.reply_text(
+    query = update.callback_query
+
+    await query.message.edit_text(
         "👥 *Manage User Plans*\n"
         "━━━━━━━━━━━━━━━━━━\n\n"
         "Enter the user's *Telegram ID* to assign a plan:\n\n"
@@ -180,9 +180,9 @@ def get_user_plan_conversation() -> ConversationHandler:
     """Build ConversationHandler for user plan management."""
     return ConversationHandler(
         entry_points=[
-            MessageHandler(
-                filters.Regex(r"^👥 Manage User Plans$"),
-                manage_user_plans_handler,
+            CallbackQueryHandler(
+                start_user_plan_callback,
+                pattern=r"^admin:user_plans$",
             ),
         ],
         states={
