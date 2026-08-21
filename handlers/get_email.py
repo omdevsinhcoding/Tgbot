@@ -76,13 +76,13 @@ async def _scan_and_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, mo
 
     # ── Show scanning message ───────────────────────
     scan_msg = await update.message.reply_text(
-        f"🔌 <b>Secure connection establish ho chuka hai…</b>\n\n"
+        f"🔌 <b>Secure connection establish ho chuka hai...</b>\n\n"
         f"📬 Inbox access granted.\n\n"
-        f"New mails check kiye ja rahe hai…\n"
-        f"Wait kijiye link milega link pr tap krke aage continue kijiye.…\n\n"
+        f"New mails check kiye ja rahe hai...\n"
+        f"Wait kijiye link milega link pr tap krke aage continue kijiye...\n\n"
         f"agar na mile to firse button ko tap kijiye mil jayega\n"
         f"agar 3-4 bar me na mile to hame whatsapp pr msg kijiyega.\n"
-        f"@{html_escape(user.username or 'user')}…\n"
+        f"@{html_escape(user.username or 'user')}...\n"
         f"Mission in progress. 🎯",
         parse_mode=ParseMode.HTML,
     )
@@ -129,7 +129,7 @@ async def _scan_and_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, mo
         # ── NOT FOUND ──────────────────────────────
         await scan_msg.delete()
         await update.message.reply_text(
-            f"📭 <b>"Aaj inbox thoda khamosh hai…"</b>\n\n"
+            f"📭 <b>Aaj inbox thoda khamosh hai...</b>\n\n"
             f"@{html_escape(user.username or 'user')}, required mail abhi tak locate nahi hua.\n\n"
             "Possible reasons:\n"
             "• Mail unread nahi hai\n"
@@ -148,27 +148,27 @@ async def _scan_and_reply(update: Update, context: ContextTypes.DEFAULT_TYPE, mo
 
     if mode == "household":
         found_text = (
-            f"Netflix: 😎 <i>"Link ko pakadna mushkil hi nahi… namumkin hai."</i>\n\n"
-            f"Lekin…\n\n"
+            f"Netflix: 😎 <i>Link ko pakadna mushkil hi nahi... namumkin hai.</i>\n\n"
+            f"Lekin...\n\n"
             f"{html_escape(BRAND)}: 🏠 Household verification link ko dhoondhna?\n\n"
             f"Woh kaam {html_escape(BRAND)} ka hai. 💎\n\n"
-            f"@{html_escape(user.username or 'user')}…\n"
-            f"Jo chahiye tha… woh mil gaya.\n\n"
+            f"@{html_escape(user.username or 'user')}...\n"
+            f"Jo chahiye tha... woh mil gaya.\n\n"
             f"🔗 <b>Household Update Link ready hai.</b>\n\n"
-            f"Der mat karo…\n"
+            f"Der mat karo...\n"
             f"Click karo aur update complete karo. ⚡\n\n"
             f"Baaki system sambhal lega."
         )
     else:
         found_text = (
-            f"Netflix: 😎 <i>"Code milna aasaan nahi hota…"</i>\n\n"
-            f"Lekin…\n\n"
+            f"Netflix: 😎 <i>Code milna aasaan nahi hota...</i>\n\n"
+            f"Lekin...\n\n"
             f"{html_escape(BRAND)}: 🔐 Temporary verification link ko locate karna?\n\n"
             f"Woh hamara kaam hai. 💎\n\n"
-            f"@{html_escape(user.username or 'user')}…\n"
+            f"@{html_escape(user.username or 'user')}...\n"
             f"Target secure ho chuka hai.\n\n"
             f"🔗 <b>Temporary Code Link ready hai.</b>\n\n"
-            f"Click karo… code generate karo… access confirm karo. ⚡\n\n"
+            f"Click karo... code generate karo... access confirm karo. ⚡\n\n"
             f"System apna kaam kar chuka hai."
         )
 
