@@ -87,4 +87,5 @@ def get_welcome_editor_conversation() -> ConversationHandler:
         fallbacks=[
             CommandHandler("cancel", cancel_welcome_edit),
         ],
+        per_message=False,
     )

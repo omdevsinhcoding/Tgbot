@@ -196,4 +196,5 @@ def get_user_plan_conversation() -> ConversationHandler:
             ],
         },
         fallbacks=[CommandHandler("cancel", cancel_user_plan_action)],
+        per_message=False,
     )

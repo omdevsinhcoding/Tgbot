@@ -11,6 +11,7 @@ def get_admin_menu() -> InlineKeyboardMarkup:
         [InlineKeyboardButton("✏️ Edit Welcome Message", callback_data="admin:welcome")],
         [InlineKeyboardButton("📋 Manage Plans", callback_data="admin:plans")],
         [InlineKeyboardButton("👥 Manage User Plans", callback_data="admin:user_plans")],
+        [InlineKeyboardButton("📧 IMAP Accounts", callback_data="imap:menu")],
         [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="admin:back")],
     ]
     return InlineKeyboardMarkup(keyboard)

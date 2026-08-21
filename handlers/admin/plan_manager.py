@@ -288,6 +288,7 @@ def get_create_plan_conversation() -> ConversationHandler:
             ],
         },
         fallbacks=[CommandHandler("cancel", cancel_plan_action)],
+        per_message=False,
     )
 
 
@@ -304,4 +305,5 @@ def get_delete_plan_conversation() -> ConversationHandler:
             ],
         },
         fallbacks=[CommandHandler("cancel", cancel_plan_action)],
+        per_message=False,
     )

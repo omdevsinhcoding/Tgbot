@@ -38,6 +38,15 @@ from handlers.admin.plan_manager import (
 )
 from handlers.admin.user_plan import get_user_plan_conversation
 
+# IMAP Handlers
+from handlers.admin.imap_manager import (
+    imap_callback_handler,
+    get_add_imap_conversation,
+    get_delete_imap_conversation,
+    get_assign_imap_conversation,
+    get_unassign_imap_conversation,
+)
+
 
 async def post_init(application):
     """Called after the Application is initialized — set up DB."""
@@ -68,10 +77,17 @@ def main():
     )
 
     # ── Register ConversationHandlers FIRST (higher priority) ──
+    # Admin conversations
     app.add_handler(get_welcome_editor_conversation())
     app.add_handler(get_create_plan_conversation())
     app.add_handler(get_delete_plan_conversation())
     app.add_handler(get_user_plan_conversation())
+
+    # IMAP conversations
+    app.add_handler(get_add_imap_conversation())
+    app.add_handler(get_delete_imap_conversation())
+    app.add_handler(get_assign_imap_conversation())
+    app.add_handler(get_unassign_imap_conversation())
 
     # ── Register Command Handlers ───────────────────────────
     app.add_handler(CommandHandler("start", start_handler))
@@ -88,6 +104,7 @@ def main():
 
     # ── Admin: Inline button callbacks ──────────────────────
     app.add_handler(CallbackQueryHandler(admin_callback_handler, pattern=r"^admin:"))
+    app.add_handler(CallbackQueryHandler(imap_callback_handler, pattern=r"^imap:"))
 
     # ── Start Polling ───────────────────────────────────────
     print("🚀 Bot is running! Press Ctrl+C to stop.")

@@ -48,6 +48,32 @@ async def create_tables():
             );
         """)
 
+        # ── IMAP Accounts Table ────────────────────────────────
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS imap_accounts (
+                id          SERIAL PRIMARY KEY,
+                email       VARCHAR(255) UNIQUE NOT NULL,
+                password    TEXT NOT NULL,
+                host        VARCHAR(255) NOT NULL DEFAULT 'imap.gmail.com',
+                port        INTEGER NOT NULL DEFAULT 993,
+                label       VARCHAR(100) DEFAULT '',
+                is_active   BOOLEAN DEFAULT TRUE,
+                created_at  TIMESTAMP DEFAULT NOW()
+            );
+        """)
+
+        # ── User-IMAP Assignment Table (many-to-many) ─────────
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS user_imap_assignments (
+                id              SERIAL PRIMARY KEY,
+                telegram_id     BIGINT NOT NULL,
+                imap_account_id INTEGER NOT NULL REFERENCES imap_accounts(id) ON DELETE CASCADE,
+                assigned_at     TIMESTAMP DEFAULT NOW(),
+                assigned_by     BIGINT DEFAULT 0,
+                UNIQUE(telegram_id, imap_account_id)
+            );
+        """)
+
         # ── Seed default welcome message if not exists ──────────
         existing = await conn.fetchval(
             "SELECT value FROM settings WHERE key = $1",
