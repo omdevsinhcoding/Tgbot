@@ -74,6 +74,15 @@ async def create_tables():
             );
         """)
 
+        # ── Mail Rules Table ──────────────────────────────────
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS rules (
+                id          SERIAL PRIMARY KEY,
+                rule_type   VARCHAR(50) NOT NULL,
+                rule_value  TEXT NOT NULL
+            );
+        """)
+
         # ── Seed default welcome message if not exists ──────────
         existing = await conn.fetchval(
             "SELECT value FROM settings WHERE key = $1",
@@ -83,10 +92,40 @@ async def create_tables():
             await conn.execute(
                 "INSERT INTO settings (key, value) VALUES ($1, $2)",
                 "welcome_message",
-                "🎉 *Welcome to IMAP Email Bot!*\n\n"
+                "🎉 Welcome to IMAP Email Bot!\n\n"
                 "Access your emails directly from Telegram.\n"
                 "Choose an option below to get started."
             )
+
+        # ── Seed default mail rules ────────────────────────────
+        rule_count = await conn.fetchval("SELECT COUNT(*) FROM rules")
+        if rule_count == 0:
+            # Sender allow rules
+            for val in ["info@account.netflix.com", "@netflix.com"]:
+                await conn.execute(
+                    "INSERT INTO rules (rule_type, rule_value) VALUES ($1, $2)",
+                    "sender_allow", val,
+                )
+            # Household subject rules
+            for val in ["update your netflix household", "how to update your netflix household",
+                        "Important: How to update your Netflix household"]:
+                await conn.execute(
+                    "INSERT INTO rules (rule_type, rule_value) VALUES ($1, $2)",
+                    "household_subject", val,
+                )
+            # Temp subject rules
+            for val in ["temporary access code", "your netflix temporary access code",
+                        "Your Netflix temporary access code"]:
+                await conn.execute(
+                    "INSERT INTO rules (rule_type, rule_value) VALUES ($1, $2)",
+                    "temp_subject", val,
+                )
+            # Link patterns
+            for val in ["travel/verify", "update-primary-location", "nftoken=", "messageGuid="]:
+                await conn.execute(
+                    "INSERT INTO rules (rule_type, rule_value) VALUES ($1, $2)",
+                    "link_pattern", val,
+                )
 
 
 async def init_database():

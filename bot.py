@@ -2,7 +2,6 @@
 Bot Entry Point — initializes the bot, database, and registers all handlers.
 """
 
-import asyncio
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -13,8 +12,9 @@ from telegram.ext import (
 
 from config import (
     BOT_TOKEN,
-    BTN_PROFILE, BTN_GET_EMAIL, BTN_DIRECT_LINK,
-    BTN_TV_ACTIVATION, BTN_SUPPORT, BTN_ADMIN_PANEL,
+    BTN_CHECK_HOUSE, BTN_CHECK_TEMP,
+    BTN_PROFILE, BTN_HELP, BTN_ADMIN_PANEL,
+    TICKET_RAISE,
 )
 
 # Database
@@ -24,9 +24,7 @@ from database.models import init_database
 # Handlers
 from handlers.start import start_handler
 from handlers.profile import profile_handler
-from handlers.get_email import get_email_handler
-from handlers.direct_link import direct_link_handler
-from handlers.tv_activation import tv_activation_handler
+from handlers.get_email import check_household_handler, check_temp_handler
 from handlers.support import support_handler
 
 # Admin Handlers
@@ -64,7 +62,7 @@ async def post_shutdown(application):
 def main():
     """Build and run the bot."""
     if not BOT_TOKEN:
-        print("❌ BOT_TOKEN not set! Copy .env.example to .env and fill in your token.")
+        print("❌ BOT_TOKEN not set! Fill in your .env file.")
         return
 
     # ── Build Application ───────────────────────────────────
@@ -76,33 +74,39 @@ def main():
         .build()
     )
 
-    # ── Register ConversationHandlers FIRST (higher priority) ──
-    # Admin conversations
+    # ── ConversationHandlers FIRST (higher priority) ────────
     app.add_handler(get_welcome_editor_conversation())
     app.add_handler(get_create_plan_conversation())
     app.add_handler(get_delete_plan_conversation())
     app.add_handler(get_user_plan_conversation())
-
-    # IMAP conversations
     app.add_handler(get_add_imap_conversation())
     app.add_handler(get_delete_imap_conversation())
     app.add_handler(get_assign_imap_conversation())
     app.add_handler(get_unassign_imap_conversation())
 
-    # ── Register Command Handlers ───────────────────────────
+    # ── Command Handlers ────────────────────────────────────
     app.add_handler(CommandHandler("start", start_handler))
 
-    # ── Register Button Handlers (ReplyKeyboard) ────────────
-    app.add_handler(MessageHandler(filters.Regex(f"^{BTN_PROFILE}$"), profile_handler))
-    app.add_handler(MessageHandler(filters.Regex(f"^{BTN_GET_EMAIL}$"), get_email_handler))
-    app.add_handler(MessageHandler(filters.Regex(f"^{BTN_DIRECT_LINK}$"), direct_link_handler))
-    app.add_handler(MessageHandler(filters.Regex(f"^{BTN_TV_ACTIVATION}$"), tv_activation_handler))
-    app.add_handler(MessageHandler(filters.Regex(f"^{BTN_SUPPORT}$"), support_handler))
+    # ── User Button Handlers (ReplyKeyboard) ────────────────
+    app.add_handler(MessageHandler(
+        filters.Regex(f"^{BTN_CHECK_HOUSE}$"), check_household_handler
+    ))
+    app.add_handler(MessageHandler(
+        filters.Regex(f"^{BTN_CHECK_TEMP}$"), check_temp_handler
+    ))
+    app.add_handler(MessageHandler(
+        filters.Regex(f"^{BTN_PROFILE}$"), profile_handler
+    ))
+    app.add_handler(MessageHandler(
+        filters.Regex(f"^{BTN_HELP}$"), support_handler
+    ))
 
-    # ── Admin: ReplyKeyboard entry → opens inline panel ─────
-    app.add_handler(MessageHandler(filters.Regex(f"^{BTN_ADMIN_PANEL}$"), admin_panel_handler))
+    # ── Admin Panel: ReplyKeyboard entry → inline panel ─────
+    app.add_handler(MessageHandler(
+        filters.Regex(f"^{BTN_ADMIN_PANEL}$"), admin_panel_handler
+    ))
 
-    # ── Admin: Inline button callbacks ──────────────────────
+    # ── Admin Inline Callbacks ──────────────────────────────
     app.add_handler(CallbackQueryHandler(admin_callback_handler, pattern=r"^admin:"))
     app.add_handler(CallbackQueryHandler(imap_callback_handler, pattern=r"^imap:"))
 

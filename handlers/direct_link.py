@@ -1,19 +1,8 @@
 """
-Direct Link Handler — placeholder for direct link generation.
-Will be implemented in Phase 2.
+Direct Link Handler — placeholder (mapped to Check Temp Code in config).
 """
 
-from telegram import Update
-from telegram.ext import ContextTypes
+from handlers.get_email import check_temp_handler
 
-
-async def direct_link_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle the 🔗 Direct Link button press."""
-    await update.message.reply_text(
-        "🔗 *Direct Link Generator*\n"
-        "━━━━━━━━━━━━━━━━━━\n\n"
-        "🚧 This feature is coming soon!\n\n"
-        "Generate direct download links for your emails "
-        "and attachments.",
-        parse_mode="Markdown",
-    )
+# This is now just an alias — direct link = temp code check
+direct_link_handler = check_temp_handler
